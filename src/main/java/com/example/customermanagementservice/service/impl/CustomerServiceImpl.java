@@ -7,6 +7,7 @@ import com.example.customermanagementservice.service.CustomerService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -53,5 +54,17 @@ public class CustomerServiceImpl implements CustomerService {
             customer.setActive(!customer.isActive());
         customerRepository.save(customer);
         return customer;
+    }
+
+    public Object updateActivation(UUID id, CustomerRequest customerDto) {
+        return null;
+    }
+
+    public Object getName(Optional<String> arya, Optional<Object> empty) {
+        return null;
+    }
+
+    public Object getAllCustomers() {
+        return null;
     }
 }

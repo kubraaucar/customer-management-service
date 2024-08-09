@@ -7,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -43,9 +45,7 @@ public class CustomerController {
     }
 
     @PutMapping("/update/{citizenNumber}")
-    public ResponseEntity<Customer> updateActivation(
-            @PathVariable("citizenNumber") long citizenNumber
-    ) {
+    public ResponseEntity<Customer> updateActivation(@PathVariable("citizenNumber") long citizenNumber) {
         Customer customer = customerService.updateActivation(citizenNumber);
         return ResponseEntity.ok(customer);
     }
