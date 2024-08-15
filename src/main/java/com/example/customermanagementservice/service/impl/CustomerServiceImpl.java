@@ -7,7 +7,6 @@ import com.example.customermanagementservice.service.CustomerService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -29,7 +28,6 @@ public class CustomerServiceImpl implements CustomerService {
         return customerRepository.findByName(name);
     }
 
-
     @Override
     public Customer addCustomer(CustomerRequest customerRequestDTO) {
         Customer customer = new Customer();
@@ -39,7 +37,6 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setSurname(customerRequestDTO.getSurname());
         customer.setActive(customerRequestDTO.isActive());
         return customerRepository.save(customer);
-
     }
 
     @Override
@@ -56,15 +53,4 @@ public class CustomerServiceImpl implements CustomerService {
         return customer;
     }
 
-    public Object updateActivation(UUID id, CustomerRequest customerDto) {
-        return null;
-    }
-
-    public Object getName(Optional<String> arya, Optional<Object> empty) {
-        return null;
-    }
-
-    public Object getAllCustomers() {
-        return null;
-    }
 }

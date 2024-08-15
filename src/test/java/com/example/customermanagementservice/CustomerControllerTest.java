@@ -34,7 +34,6 @@ public class CustomerControllerTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-
     }
 
     @Test
@@ -67,7 +66,7 @@ public class CustomerControllerTest {
         request.setCitizenNumber(1234);
 
         when(customerService.addCustomer(request)).thenReturn(expected);
-        ResponseEntity<Customer> customerResponseEntity = controller.addCustomer(request);
+        ResponseEntity<Object> customerResponseEntity = controller.addCustomer(request);
         assertEquals(expected,customerResponseEntity.getBody());
     }
 
@@ -94,5 +93,4 @@ public class CustomerControllerTest {
 
         assertEquals(expected,customerResponseEntity.getBody());
     }
-
 }

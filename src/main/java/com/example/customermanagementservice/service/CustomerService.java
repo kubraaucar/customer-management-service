@@ -16,4 +16,6 @@ public interface CustomerService {
     void deleteCustomer(UUID customerId);
 
     Customer updateActivation(long citizenNumber);
+
+
 }

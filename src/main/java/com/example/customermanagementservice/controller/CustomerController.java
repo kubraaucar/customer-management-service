@@ -2,14 +2,13 @@ package com.example.customermanagementservice.controller;
 
 import com.example.customermanagementservice.model.Customer;
 import com.example.customermanagementservice.service.CustomerService;
+
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -33,7 +32,7 @@ public class CustomerController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<Customer> addCustomer(@RequestBody CustomerRequest customerRequestDTO) {
+    public ResponseEntity<Object> addCustomer(@Valid @RequestBody CustomerRequest customerRequestDTO) {
         Customer customer = customerService.addCustomer(customerRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(customer);
     }

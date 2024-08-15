@@ -1,11 +1,14 @@
 package com.example.customermanagementservice.controller;
 
 import jakarta.persistence.Column;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
 
 
 public class CustomerRequest {
+    @NotBlank
     private String name;
     private String surname;
     private long citizenNumber;
