@@ -1,7 +1,5 @@
 package com.example.customermanagementservice.exceptions;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,6 +20,4 @@ public class GeneralExceptionHandler {
     public ResponseEntity<Object> customerNotFoundExceptionHandler(CustomerNotFoundException exception)  {
         return new ResponseEntity<>(exception.getMessage(), HttpStatus.NOT_FOUND);
     }
-
-
 }
