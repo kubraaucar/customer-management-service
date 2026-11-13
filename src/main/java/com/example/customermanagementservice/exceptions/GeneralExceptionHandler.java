@@ -8,6 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -40,6 +44,35 @@ public class GeneralExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(InvalidSortPropertyException.class)
     public ProblemDetail handleInvalidSortProperty(InvalidSortPropertyException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(DemoDisabledException.class)
+    public ProblemDetail handleDemoDisabled(DemoDisabledException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    // ---- login and permissions (401 / 403) ----
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ProblemDetail handleBadCredentials(BadCredentialsException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Kullanıcı adı veya şifre hatalı.");
+    }
+
+    // The token was sent but is broken, signed with another key or expired.
+    @ExceptionHandler(InvalidBearerTokenException.class)
+    public ProblemDetail handleInvalidToken(InvalidBearerTokenException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED,
+                "Oturumunuzun süresi dolmuş veya oturum geçersiz. Lütfen tekrar giriş yapın.");
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleNotAuthenticated(AuthenticationException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Bu işlem için giriş yapmalısınız.");
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Bu işlem için yetkiniz yok.");
     }
 
     // Safety net for the database unique constraint (e.g. two requests adding the same customer at once).

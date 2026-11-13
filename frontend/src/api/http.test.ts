@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, errorMessage, request, toApiError } from './http'
+import { ApiError, errorMessage, onUnauthorized, request, setAuthToken, toApiError } from './http'
 
 function problem(status: number, body: object): Response {
   return new Response(JSON.stringify(body), {
@@ -10,6 +10,8 @@ function problem(status: number, body: object): Response {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  setAuthToken(null)
+  onUnauthorized(null)
 })
 
 describe('toApiError', () => {
@@ -70,6 +72,41 @@ describe('request', () => {
     const abortError = new DOMException('aborted', 'AbortError')
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(abortError))
     await expect(request('/api/x', { signal: controller.signal })).rejects.toBe(abortError)
+  })
+})
+
+describe('login token', () => {
+  it('is sent as a Bearer header once set, and not before', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response('{}', { status: 200 })))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await request('/api/x')
+    setAuthToken('abc.def.ghi')
+    await request('/api/x')
+
+    expect((fetchMock.mock.calls[0][1].headers as Headers).has('Authorization')).toBe(false)
+    expect((fetchMock.mock.calls[1][1].headers as Headers).get('Authorization')).toBe('Bearer abc.def.ghi')
+  })
+
+  it('reports a rejected token (401) so the app can show the login page', async () => {
+    const handler = vi.fn()
+    onUnauthorized(handler)
+    setAuthToken('expired.token')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(problem(401, { detail: 'Oturum geçersiz' })))
+
+    await expect(request('/api/x')).rejects.toMatchObject({ status: 401 })
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
+  it('does not treat a wrong password (401 without a token) as an expired login', async () => {
+    const handler = vi.fn()
+    onUnauthorized(handler)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(problem(401, { detail: 'Kullanıcı adı veya şifre hatalı.' })))
+
+    await expect(request('/api/auth/login', { method: 'POST', body: '{}' })).rejects.toMatchObject({
+      message: 'Kullanıcı adı veya şifre hatalı.',
+    })
+    expect(handler).not.toHaveBeenCalled()
   })
 })
 

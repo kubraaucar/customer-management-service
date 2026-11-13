@@ -6,14 +6,18 @@ import com.example.customermanagementservice.dto.CustomerResponse;
 import com.example.customermanagementservice.exceptions.CustomerNotFoundException;
 import com.example.customermanagementservice.exceptions.DuplicateCitizenNumberException;
 import com.example.customermanagementservice.exceptions.InvalidSortPropertyException;
+import com.example.customermanagementservice.security.SecurityConfig;
 import com.example.customermanagementservice.service.CustomerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,9 +39,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Tests the HTTP layer: URLs, status codes, JSON bodies and CORS (the service is mocked).
+ * Tests the HTTP layer: URLs, status codes, JSON bodies, permissions and CORS (the service is mocked).
+ * Unless a test says otherwise, requests are made as a signed-in administrator.
  */
 @WebMvcTest(CustomerController.class)
+@Import(SecurityConfig.class)
+@WithMockUser(roles = "ADMIN")
 class CustomerControllerTest {
 
     private static final long CITIZEN_NUMBER = 12345678901L;
@@ -250,6 +258,47 @@ class CustomerControllerTest {
                 .andExpect(content().string(not(containsString("secret"))));
     }
 
+    // ---- login and permissions ----
+
+    @Test
+    @WithAnonymousUser
+    void withoutLogin_returns401WithTurkishMessage() throws Exception {
+        mockMvc.perform(get("/api/customers"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Bu işlem için giriş yapmalısınız."));
+
+        verifyNoInteractions(customerService);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void withBrokenToken_returns401AskingToLogInAgain() throws Exception {
+        mockMvc.perform(get("/api/customers").header("Authorization", "Bearer not-a-real-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value(containsString("tekrar giriş yapın")));
+    }
+
+    @Test
+    @WithMockUser(roles = "VIEWER")
+    void viewer_canReadCustomers() throws Exception {
+        when(customerService.getById(ID)).thenReturn(response(true));
+
+        mockMvc.perform(get("/api/customers/{id}", ID))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "VIEWER")
+    void viewer_cannotChangeCustomers_returns403() throws Exception {
+        mockMvc.perform(post("/api/customers").contentType(APPLICATION_JSON).content(VALID_BODY))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.detail").value("Bu işlem için yetkiniz yok."));
+        mockMvc.perform(delete("/api/customers/{id}", ID))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(customerService);
+    }
+
     // ---- CORS ----
 
     @Test
@@ -259,6 +308,17 @@ class CustomerControllerTest {
                         .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+    }
+
+    @Test
+    @WithAnonymousUser
+    void cors_allowsTheAuthorizationHeaderBeforeLogin() throws Exception {
+        mockMvc.perform(options("/api/customers")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "GET")
+                        .header("Access-Control-Request-Headers", "authorization"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Headers", containsStringIgnoringCase("authorization")));
     }
 
     @Test

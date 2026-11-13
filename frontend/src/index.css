@@ -13,6 +13,8 @@
   --danger-soft: #fef2f2;
   --success: #15803d;
   --success-soft: #f0fdf4;
+  --info: #1d4ed8;
+  --info-soft: #eff6ff;
   --focus: #93c5fd;
   --shadow: 0 1px 2px rgb(15 23 42 / 6%), 0 4px 16px rgb(15 23 42 / 6%);
   --radius: 10px;
@@ -40,6 +42,8 @@
     --danger-soft: #2a1215;
     --success: #4ade80;
     --success-soft: #0f2418;
+    --info: #93c5fd;
+    --info-soft: #0f1d3a;
     --focus: #1d4ed8;
     --shadow: 0 1px 2px rgb(0 0 0 / 40%);
 
@@ -90,7 +94,7 @@ input {
 .app {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 32px 16px 64px;
+  padding: 28px 16px 64px;
 }
 
 .app-header {
@@ -146,6 +150,7 @@ input {
 /* ---- form controls ---- */
 
 input[type='text'],
+input[type='password'],
 input[type='search'],
 input[type='date'] {
   width: 100%;
@@ -231,6 +236,117 @@ input[aria-invalid='true'] {
 .alert-error {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.alert-info {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.button-block {
+  width: 100%;
+}
+
+/* ---- top bar ---- */
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 16px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.role-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.role-admin {
+  background: var(--info-soft);
+  border-color: transparent;
+  color: var(--info);
+}
+
+/* ---- login page ---- */
+
+.login-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+.login-card {
+  width: min(400px, 100%);
+  padding: 28px 24px;
+}
+
+.login-card .brand {
+  margin-bottom: 20px;
+  font-size: 1.125rem;
+}
+
+.login-card h1 {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+}
+
+.login-card .form {
+  margin-top: 4px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.hint {
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 /* ---- table ---- */

@@ -1,5 +1,18 @@
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
 
+let authToken: string | null = null
+let unauthorizedHandler: (() => void) | null = null
+
+/** The login token sent with every request ("Authorization: Bearer ..."), or null when logged out. */
+export function setAuthToken(token: string | null): void {
+  authToken = token
+}
+
+/** Called when the backend rejects our token (expired or invalid), so the app can show the login page. */
+export function onUnauthorized(handler: (() => void) | null): void {
+  unauthorizedHandler = handler
+}
+
 /** An error answer from the backend, already turned into a message we can show the user. */
 export class ApiError extends Error {
   /** HTTP status code, or 0 when the server could not be reached at all. */
@@ -50,6 +63,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   const headers = new Headers(init.headers)
   headers.set('Accept', 'application/json')
   if (init.body !== undefined) headers.set('Content-Type', 'application/json')
+  if (authToken) headers.set('Authorization', `Bearer ${authToken}`)
 
   let response: Response
   try {
@@ -59,6 +73,8 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     throw new ApiError(0, UNREACHABLE_MESSAGE)
   }
 
+  // 401 with a token means the login has expired. (A 401 without a token is just a wrong password.)
+  if (response.status === 401 && authToken) unauthorizedHandler?.()
   if (!response.ok) throw await toApiError(response)
   if (response.status === 204) return undefined as T
   return (await response.json()) as T

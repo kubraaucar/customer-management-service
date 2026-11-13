@@ -5,6 +5,8 @@ interface CustomerTableProps {
   customers: Customer[]
   sort: Sort
   onSortChange: (sort: Sort) => void
+  /** Hides the switch and the edit/delete buttons (demo users). */
+  readOnly: boolean
   /** Ids of customers whose active state is being saved right now. */
   pendingIds: ReadonlySet<string>
   onToggleActive: (customer: Customer) => void
@@ -24,6 +26,7 @@ export function CustomerTable({
   customers,
   sort,
   onSortChange,
+  readOnly,
   pendingIds,
   onToggleActive,
   onEdit,
@@ -55,9 +58,11 @@ export function CustomerTable({
               </th>
             )
           })}
-          <th scope="col" className="actions-column">
-            <span className="visually-hidden">İşlemler</span>
-          </th>
+          {!readOnly && (
+            <th scope="col" className="actions-column">
+              <span className="visually-hidden">İşlemler</span>
+            </th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -72,41 +77,49 @@ export function CustomerTable({
               {formatDate(customer.birthDate)}
             </td>
             <td data-label="Durum">
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  role="switch"
-                  checked={customer.active}
-                  disabled={pendingIds.has(customer.id)}
-                  aria-label={`${fullName(customer)} aktif`}
-                  onChange={() => onToggleActive(customer)}
-                />
-                <span className="switch-track" aria-hidden="true" />
+              {readOnly ? (
                 <span className={customer.active ? 'badge badge-active' : 'badge'}>
                   {customer.active ? 'Aktif' : 'Pasif'}
                 </span>
-              </label>
+              ) : (
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={customer.active}
+                    disabled={pendingIds.has(customer.id)}
+                    aria-label={`${fullName(customer)} aktif`}
+                    onChange={() => onToggleActive(customer)}
+                  />
+                  <span className="switch-track" aria-hidden="true" />
+                  <span className={customer.active ? 'badge badge-active' : 'badge'}>
+                    {customer.active ? 'Aktif' : 'Pasif'}
+                  </span>
+                </label>
+              )}
             </td>
-            <td className="actions-column">
-              <div className="row-actions">
-                <button
-                  type="button"
-                  className="button button-small"
-                  onClick={() => onEdit(customer)}
-                  aria-label={`${fullName(customer)} düzenle`}
-                >
-                  Düzenle
-                </button>
-                <button
-                  type="button"
-                  className="button button-small button-danger-outline"
-                  onClick={() => onDelete(customer)}
-                  aria-label={`${fullName(customer)} sil`}
-                >
-                  Sil
-                </button>
-              </div>
-            </td>
+            {!readOnly && (
+              <td className="actions-column">
+                <div className="row-actions">
+                  <button
+                    type="button"
+                    className="button button-small"
+                    onClick={() => onEdit(customer)}
+                    aria-label={`${fullName(customer)} düzenle`}
+                  >
+                    Düzenle
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-small button-danger-outline"
+                    onClick={() => onDelete(customer)}
+                    aria-label={`${fullName(customer)} sil`}
+                  >
+                    Sil
+                  </button>
+                </div>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

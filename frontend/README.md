@@ -3,8 +3,13 @@
 React + TypeScript + Vite single-page app for the customer REST API (`/api/customers`).
 The user interface is in Turkish.
 
-Features: customer list with search, sorting and paging, add/edit form with the same
-validation rules as the backend, active/passive switch, and delete with confirmation.
+Features: login page (administrator, or a read-only "Demo olarak dene" button), customer list
+with search, sorting and paging, add/edit form with the same validation rules as the backend,
+active/passive switch, and delete with confirmation.
+
+Local development login: `admin` / `admin12345` (set with `ADMIN_USERNAME` / `ADMIN_PASSWORD`
+on the backend). The login token is kept in the browser's localStorage and sent as
+`Authorization: Bearer <token>`.
 
 ## Requirements
 
