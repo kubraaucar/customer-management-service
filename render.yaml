@@ -21,6 +21,9 @@ services:
         sync: false
       - key: DEMO_ENABLED
         value: "true"
+      # Also load the made-up example customers (src/main/resources/db/sample-data).
+      - key: SPRING_FLYWAY_LOCATIONS
+        value: classpath:db/migration,classpath:db/sample-data
       # Database (e.g. Neon): jdbc:postgresql://<host>/<database>?sslmode=require
       - key: SPRING_DATASOURCE_URL
         sync: false
