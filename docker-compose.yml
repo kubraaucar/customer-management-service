@@ -1,3 +1,7 @@
+# Whole application:        docker compose up -d --build     -> http://localhost:3000
+# Only the database (for local development with mvnw / npm run dev):
+#                           docker compose up -d postgresql
+# Values come from .env when it exists (see .env.example), otherwise the defaults below are used.
 services:
   postgresql:
     container_name: customer-db
@@ -11,6 +15,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   pgadmin:
     container_name: customer-pgadmin
     image: dpage/pgadmin4
@@ -22,5 +32,39 @@ services:
       - "5055:80"
     depends_on:
       - postgresql
+
+  # Spring Boot API. Not published on the host (so it never clashes with a local
+  # mvnw spring-boot:run on 8080); the frontend container forwards /api to it.
+  backend:
+    container_name: customer-backend
+    build: .
+    image: customer-management-backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_HOST: postgresql
+      DB_PORT: 5432
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+
+  # React app served by nginx: http://localhost:3000 (Swagger UI: http://localhost:3000/swagger-ui.html)
+  frontend:
+    container_name: customer-frontend
+    build: ./frontend
+    image: customer-management-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
   postgres_data:

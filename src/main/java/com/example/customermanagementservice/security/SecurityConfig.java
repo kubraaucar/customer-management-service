@@ -62,6 +62,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/demo").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
+                        // Only "UP"/"DOWN" is shown here (no details), so it is safe to leave open.
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         // Reading is allowed for every signed-in user, changing only for administrators.
                         .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("ADMIN", "VIEWER")
                         .requestMatchers("/api/**").hasRole("ADMIN")

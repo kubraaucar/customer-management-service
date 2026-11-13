@@ -60,6 +60,11 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
+		<!-- /actuator/health: lets Docker and the hosting service check that the app is up -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<!-- Login: Spring Security + JWT tokens (encoding and checking) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

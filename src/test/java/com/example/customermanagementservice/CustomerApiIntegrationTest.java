@@ -131,6 +131,14 @@ class CustomerApiIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void healthCheck_isOpenWithoutLogin_andShowsNoDetails() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.components").doesNotExist());
+    }
+
     // ---- login and permissions ----
 
     @Test

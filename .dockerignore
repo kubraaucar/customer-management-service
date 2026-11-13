@@ -1,0 +1,4 @@
+# The backend image only needs these; everything else (frontend, target, .git, IDE files) stays out.
+*
+!pom.xml
+!src/
