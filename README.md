@@ -5,6 +5,16 @@
 A full-stack customer management application: a Spring Boot REST API with a React frontend,
 PostgreSQL storage and token-based login. The user interface is in Turkish.
 
+**Live demo: https://customer-management-roan.vercel.app** – press **Demo olarak dene** for read-only access
+without signing up. The first request can take up to a minute while the free server wakes up.
+API documentation: [Swagger UI](https://customer-management-api-8qu6.onrender.com/swagger-ui.html)
+
+![Customer list](docs/screenshots/customers.png)
+
+| Login | Mobile |
+| ----- | ------ |
+| ![Login page](docs/screenshots/login.png) | <img src="docs/screenshots/mobile.png" alt="Customer list on a phone" width="300"> |
+
 ## Features
 
 - Customer list with search (by full name), sorting and paging
@@ -69,11 +79,14 @@ The defaults are meant for local development only.
 
 The live version runs on free plans:
 
-| Part | Service | Setup |
-| ---- | ------- | ----- |
-| Database | [Neon](https://neon.tech) (PostgreSQL) | Direct (non-pooled) connection, used by the backend through `SPRING_DATASOURCE_*` |
-| Backend | [Render](https://render.com) (Docker) | [render.yaml](render.yaml) Blueprint; `SPRING_PROFILES_ACTIVE=prod` |
-| Frontend | [Vercel](https://vercel.com) | Root directory `frontend`, `VITE_API_URL` = backend address |
+| Part | Service | Address | Setup |
+| ---- | ------- | ------- | ----- |
+| Frontend | [Vercel](https://vercel.com) | https://customer-management-roan.vercel.app | Root directory `frontend`, `VITE_API_URL` = backend address |
+| Backend | [Render](https://render.com) (Docker) | https://customer-management-api-8qu6.onrender.com | [render.yaml](render.yaml) Blueprint; `SPRING_PROFILES_ACTIVE=prod` |
+| Database | [Neon](https://neon.tech) (PostgreSQL 17) | – | Direct (non-pooled) connection, used by the backend through `SPRING_DATASOURCE_*` |
+
+Pushing to `main` redeploys both the backend and the frontend automatically. The demo database
+gets made-up example customers from [db/sample-data](src/main/resources/db/sample-data).
 
 The backend's `CORS_ALLOWED_ORIGINS` must contain the frontend address. Render's free plan stops the
 backend after a period without traffic, so the first request afterwards can take up to a minute;
