@@ -80,6 +80,16 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   return (await response.json()) as T
 }
 
+/**
+ * Sends a cheap request so a sleeping server (free hosting stops it when unused) starts waking up
+ * while the user is still typing. The answer does not matter.
+ */
+export function wakeUpServer(): void {
+  fetch(`${API_BASE}/actuator/health`).catch(() => {
+    // Ignored: the real request will show an error if the server stays unreachable.
+  })
+}
+
 /** A message for any error, suitable for showing to the user. */
 export function errorMessage(error: unknown): string {
   return error instanceof ApiError ? error.message : 'Beklenmeyen bir hata oluştu.'

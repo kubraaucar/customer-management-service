@@ -8,6 +8,7 @@ export default defineConfig({
     // In development the browser talks only to Vite; Vite forwards /api calls to Spring Boot.
     proxy: {
       '/api': 'http://localhost:8080',
+      '/actuator/health': 'http://localhost:8080',
     },
   },
 })

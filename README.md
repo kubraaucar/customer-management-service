@@ -56,12 +56,28 @@ The defaults are meant for local development only.
 | -------- | ------- | ------- |
 | `DB_HOST`, `DB_PORT`, `DB_NAME` | `localhost`, `5432`, `customer_db` | Database address |
 | `DB_USERNAME`, `DB_PASSWORD` | `postgres`, `12345` | Database login |
+| `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` | – | Full JDBC address and login; replace the `DB_*` settings (used for hosted databases that need `?sslmode=require`) |
+| `PORT` | `8080` | HTTP port (set by hosting services) |
 | `JWT_SECRET` | development value | Key that signs login tokens (32+ characters) |
 | `JWT_EXPIRATION` | `8h` | How long a login stays valid |
 | `ADMIN_USERNAME`, `ADMIN_PASSWORD` | `admin`, `admin12345` | Administrator account, created or updated at startup |
 | `DEMO_ENABLED` | `true` | Shows the read-only demo login |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Frontend addresses allowed to call the API |
 | `SPRING_PROFILES_ACTIVE` | – | Set to `prod` in production: then `JWT_SECRET` and `ADMIN_PASSWORD` are required |
+
+## Deployment
+
+The live version runs on free plans:
+
+| Part | Service | Setup |
+| ---- | ------- | ----- |
+| Database | [Neon](https://neon.tech) (PostgreSQL) | Direct (non-pooled) connection, used by the backend through `SPRING_DATASOURCE_*` |
+| Backend | [Render](https://render.com) (Docker) | [render.yaml](render.yaml) Blueprint; `SPRING_PROFILES_ACTIVE=prod` |
+| Frontend | [Vercel](https://vercel.com) | Root directory `frontend`, `VITE_API_URL` = backend address |
+
+The backend's `CORS_ALLOWED_ORIGINS` must contain the frontend address. Render's free plan stops the
+backend after a period without traffic, so the first request afterwards can take up to a minute;
+the login page shows a notice while the server wakes up.
 
 ## API
 

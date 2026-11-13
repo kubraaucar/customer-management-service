@@ -133,8 +133,10 @@ class CustomerApiIntegrationTest {
 
     @Test
     void healthCheck_isOpenWithoutLogin_andShowsNoDetails() throws Exception {
-        mockMvc.perform(get("/actuator/health"))
+        // Called from the frontend's address (login page wake-up call), so CORS must allow it.
+        mockMvc.perform(get("/actuator/health").header("Origin", "http://localhost:5173"))
                 .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
                 .andExpect(jsonPath("$.status").value("UP"))
                 .andExpect(jsonPath("$.components").doesNotExist());
     }

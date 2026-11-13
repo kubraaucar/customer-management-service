@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { login, loginAsDemo } from '../api/auth'
-import { errorMessage } from '../api/http'
+import { errorMessage, wakeUpServer } from '../api/http'
 import type { Session } from '../auth/session'
 
 interface LoginPageProps {
@@ -14,9 +14,22 @@ export function LoginPage({ notice, onLoggedIn }: LoginPageProps) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<'password' | 'demo' | null>(null)
+  // True when a login takes long, which usually means the free server is still waking up.
+  const [slow, setSlow] = useState(false)
+
+  useEffect(() => {
+    wakeUpServer()
+  }, [])
+
+  useEffect(() => {
+    if (!busy) return
+    const timer = setTimeout(() => setSlow(true), 4000)
+    return () => clearTimeout(timer)
+  }, [busy])
 
   async function attempt(kind: 'password' | 'demo', action: () => Promise<Session>) {
     setBusy(kind)
+    setSlow(false)
     setError(null)
     try {
       onLoggedIn(await action())
@@ -44,9 +57,14 @@ export function LoginPage({ notice, onLoggedIn }: LoginPageProps) {
         </div>
         <h1>Giriş yap</h1>
 
-        {notice && !error && (
+        {notice && !error && !(busy && slow) && (
           <p className="alert alert-info" role="status">
             {notice}
+          </p>
+        )}
+        {busy && slow && (
+          <p className="alert alert-info" role="status">
+            Sunucu uyku modundan uyanıyor; ilk giriş bir dakika kadar sürebilir. Lütfen bekleyin…
           </p>
         )}
         {error && (

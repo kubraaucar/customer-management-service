@@ -117,6 +117,8 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", cors);
+        // The login page calls this to wake up a sleeping free-tier server early.
+        source.registerCorsConfiguration("/actuator/health", cors);
         return source;
     }
 }
