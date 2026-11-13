@@ -14,12 +14,12 @@ public class Customer {
     private UUID id;
     private String name;
     private String surname;
-    @Column(name="citizen_number")
+    @Column(name = "citizen_number", unique = true, nullable = false)
     private long citizenNumber;
     @Column(name = "birth_date")
     private Date birthDate;
     @Column(name = "is_active")
-    private boolean isActive;
+    private boolean active;
 
     public UUID getId() {
         return id;
@@ -62,10 +62,10 @@ public class Customer {
     }
 
     public boolean isActive() {
-        return isActive;
+        return active;
     }
 
     public void setActive(boolean active) {
-        isActive = active;
+        this.active = active;
     }
 }

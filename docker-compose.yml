@@ -1,22 +1,26 @@
 services:
   postgresql:
-    container_name: customer-db2
-    image: postgres:latest
-    restart: always
+    container_name: customer-db
+    image: postgres:17
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: ${DB_NAME:-customer_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-12345}
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
-      - postgresqldb_data:/data/db/postgresql2
+      - postgres_data:/var/lib/postgresql/data
   pgadmin:
+    container_name: customer-pgadmin
     image: dpage/pgadmin4
-    restart: always
+    restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: kuubraucar1@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: 12345
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-12345}
     ports:
       - "5055:80"
+    depends_on:
+      - postgresql
 volumes:
-  postgresqldb_data:
+  postgres_data:

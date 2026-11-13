@@ -1,142 +1,126 @@
 package com.example.customermanagementservice;
 
-import com.example.customermanagementservice.controller.CustomerController;
 import com.example.customermanagementservice.controller.CustomerRequest;
+import com.example.customermanagementservice.exceptions.CustomerNotFoundException;
+import com.example.customermanagementservice.exceptions.DuplicateCitizenNumberException;
 import com.example.customermanagementservice.model.Customer;
 import com.example.customermanagementservice.repository.CustomerRepository;
 import com.example.customermanagementservice.service.impl.CustomerServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-public class CustomerServiceTest {
+@ExtendWith(MockitoExtension.class)
+class CustomerServiceTest {
+
+    private static final long CITIZEN_NUMBER = 12345678901L;
+
     @Mock
-    private CustomerServiceImpl customerService;
+    private CustomerRepository customerRepository;
 
     @InjectMocks
-    private CustomerController controller;
-
-
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
-
-    }
+    private CustomerServiceImpl customerService;
 
     @Test
     void getAll_when_called_then_returnSuccess() {
-        // Arrange
-        CustomerRepository mockCustomerRepository = mock(CustomerRepository.class);
-        CustomerServiceImpl customerService = new CustomerServiceImpl(mockCustomerRepository);
-
         Customer expected = new Customer();
-        expected.setCitizenNumber(1234);
+        expected.setCitizenNumber(CITIZEN_NUMBER);
+        when(customerRepository.findAll()).thenReturn(List.of(expected));
 
-        when(mockCustomerRepository.findAll()).thenReturn(List.of(expected));
+        List<Customer> actual = customerService.getAll();
 
-        // Act
-        List<Customer> actualCustomers = customerService.getAll();
-
-        // Assert
-        assertEquals(1, actualCustomers.size());
-        assertEquals(expected, actualCustomers.get(0));
+        assertEquals(List.of(expected), actual);
     }
 
     @Test
     void getByName_when_validNameProvided_then_returnSuccess() {
-        // Arrange
-        CustomerRepository mockCustomerRepository = mock(CustomerRepository.class);
-        CustomerServiceImpl customerService = new CustomerServiceImpl(mockCustomerRepository);
-
         Customer expected = new Customer();
         expected.setName("kubra");
+        when(customerRepository.findByName("kubra")).thenReturn(List.of(expected));
 
-        when(mockCustomerRepository.findByName("kubra")).thenReturn(List.of(expected));
+        List<Customer> actual = customerService.getByName("kubra");
 
-        // Act
-        List<Customer> actualCustomers = customerService.getByName("kubra");
-
-        // Assert
-        assertEquals(1, actualCustomers.size());
-        assertEquals(expected, actualCustomers.get(0));
+        assertEquals(List.of(expected), actual);
     }
 
     @Test
     void addCustomer_when_validCustomerRequestProvided_then_Success() {
-        // Arrange
-        CustomerRepository mockCustomerRepository = mock(CustomerRepository.class);
-        CustomerServiceImpl customerService = new CustomerServiceImpl(mockCustomerRepository);
+        CustomerRequest request = new CustomerRequest();
+        request.setName("kubra");
+        request.setSurname("ucar");
+        request.setCitizenNumber(CITIZEN_NUMBER);
+        request.setActive(true);
+        when(customerRepository.existsByCitizenNumber(CITIZEN_NUMBER)).thenReturn(false);
+        when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        CustomerRequest customerRequestDTO = new CustomerRequest();
-        customerRequestDTO.setName("kubra");
-        customerRequestDTO.setSurname("ucar");
-        customerRequestDTO.setCitizenNumber(1234);
-      //  customerRequestDTO.setBirthDate(2002, 01, 08);
-        customerRequestDTO.setActive(true);
+        Customer actual = customerService.addCustomer(request);
 
-        Customer expectedCustomer = new Customer();
-        expectedCustomer.setName("kubra");
-        expectedCustomer.setSurname("ucar");
-        expectedCustomer.setCitizenNumber(1234);
-        //expectedCustomer.setBirthDate(2002, 01, 08);
-        expectedCustomer.setActive(true);
-
-        when(mockCustomerRepository.save(any(Customer.class))).thenReturn(expectedCustomer);
-
-        // Act
-        Customer actualCustomer = customerService.addCustomer(customerRequestDTO);
-
-        // Assert
-        assertNotNull(actualCustomer);
-        assertEquals(expectedCustomer, actualCustomer);
-        verify(mockCustomerRepository, times(1)).save(any(Customer.class));
+        assertEquals("kubra", actual.getName());
+        assertEquals("ucar", actual.getSurname());
+        assertEquals(CITIZEN_NUMBER, actual.getCitizenNumber());
+        assertTrue(actual.isActive());
+        verify(customerRepository).save(any(Customer.class));
     }
 
     @Test
-    void deleteCustomer_when_validCustomerIdProvided_then_Success() {
-        // Arrange
-        CustomerRepository mockCustomerRepository = mock(CustomerRepository.class);
-        CustomerServiceImpl customerService = new CustomerServiceImpl(mockCustomerRepository);
+    void addCustomer_when_citizenNumberAlreadyExists_then_throwDuplicate() {
+        CustomerRequest request = new CustomerRequest();
+        request.setName("kubra");
+        request.setCitizenNumber(CITIZEN_NUMBER);
+        when(customerRepository.existsByCitizenNumber(CITIZEN_NUMBER)).thenReturn(true);
 
+        assertThrows(DuplicateCitizenNumberException.class, () -> customerService.addCustomer(request));
+        verify(customerRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteCustomer_when_customerExists_then_Success() {
         UUID customerId = UUID.randomUUID();
+        when(customerRepository.existsById(customerId)).thenReturn(true);
 
-        // Act
         customerService.deleteCustomer(customerId);
 
-        // Assert
-        verify(mockCustomerRepository, times(1)).deleteById(customerId);
+        verify(customerRepository).deleteById(customerId);
     }
 
     @Test
-    void updateActivation_when_validCitizenNumberProvided_then_Success() {
-        // Arrange
-        CustomerRepository mockCustomerRepository = mock(CustomerRepository.class);
-        CustomerServiceImpl customerService = new CustomerServiceImpl(mockCustomerRepository);
+    void deleteCustomer_when_customerMissing_then_throwNotFound() {
+        UUID customerId = UUID.randomUUID();
+        when(customerRepository.existsById(customerId)).thenReturn(false);
 
-        long citizenNumber = 1234;
+        assertThrows(CustomerNotFoundException.class, () -> customerService.deleteCustomer(customerId));
+        verify(customerRepository, never()).deleteById(any());
+    }
 
+    @Test
+    void updateActivation_when_validCitizenNumberProvided_then_toggleActive() {
         Customer customer = new Customer();
-        customer.setCitizenNumber(citizenNumber);
+        customer.setCitizenNumber(CITIZEN_NUMBER);
         customer.setActive(true);
+        when(customerRepository.findByCitizenNumber(CITIZEN_NUMBER)).thenReturn(Optional.of(customer));
+        when(customerRepository.save(customer)).thenReturn(customer);
 
-        when(mockCustomerRepository.findByCitizenNumber(citizenNumber)).thenReturn(List.of(customer));
-        when(mockCustomerRepository.save(any(Customer.class))).thenReturn(customer);
+        Customer updated = customerService.updateActivation(CITIZEN_NUMBER);
 
-        // Act
-        Customer updatedCustomer = customerService.updateActivation(citizenNumber);
+        assertFalse(updated.isActive());
+        verify(customerRepository).save(customer);
+    }
 
-        // Assert
-        assertNotNull(updatedCustomer);
-        assertEquals(citizenNumber, updatedCustomer.getCitizenNumber());
-        assertFalse(updatedCustomer.isActive()); // Aktivasyon durumu tersine döndü mü kontrol et
-        verify(mockCustomerRepository, times(1)).save(customer);
+    @Test
+    void updateActivation_when_customerMissing_then_throwNotFound() {
+        when(customerRepository.findByCitizenNumber(CITIZEN_NUMBER)).thenReturn(Optional.empty());
+
+        assertThrows(CustomerNotFoundException.class, () -> customerService.updateActivation(CITIZEN_NUMBER));
+        verify(customerRepository, never()).save(any());
     }
 }

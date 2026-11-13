@@ -1,6 +1,8 @@
 package com.example.customermanagementservice.controller;
 
-import jakarta.persistence.Column;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -11,9 +13,14 @@ public class CustomerRequest {
     @NotBlank
     private String name;
     private String surname;
-    private long citizenNumber;
+    @NotNull
+    @Min(value = 10_000_000_000L, message = "must be an 11-digit number")
+    @Max(value = 99_999_999_999L, message = "must be an 11-digit number")
+    private Long citizenNumber;
     private Date birthDate;
-    private boolean isActive;
+    // JSON field is "active"; "isActive" is also accepted so it isn't silently ignored.
+    @JsonAlias("isActive")
+    private boolean active;
 
     public String getName() {
         return name;
@@ -31,11 +38,11 @@ public class CustomerRequest {
         this.surname = surname;
     }
 
-    public long getCitizenNumber() {
+    public Long getCitizenNumber() {
         return citizenNumber;
     }
 
-    public void setCitizenNumber(long citizenNumber) {
+    public void setCitizenNumber(Long citizenNumber) {
         this.citizenNumber = citizenNumber;
     }
 
@@ -48,10 +55,10 @@ public class CustomerRequest {
     }
 
     public boolean isActive() {
-        return isActive;
+        return active;
     }
 
     public void setActive(boolean active) {
-        isActive = active;
+        this.active = active;
     }
 }
