@@ -2,23 +2,25 @@ package com.example.customermanagementservice.model;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name= "Customers")
+@Table(name = "customers")
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+    @Column(nullable = false, length = 100)
     private String name;
+    @Column(nullable = false, length = 100)
     private String surname;
     @Column(name = "citizen_number", unique = true, nullable = false)
     private long citizenNumber;
     @Column(name = "birth_date")
-    private Date birthDate;
-    @Column(name = "is_active")
+    private LocalDate birthDate;
+    @Column(name = "is_active", nullable = false)
     private boolean active;
 
     public UUID getId() {
@@ -53,11 +55,11 @@ public class Customer {
         this.citizenNumber = citizenNumber;
     }
 
-    public Date getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(Date birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 

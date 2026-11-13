@@ -1,21 +1,24 @@
 package com.example.customermanagementservice.service;
 
-import com.example.customermanagementservice.controller.CustomerRequest;
-import com.example.customermanagementservice.model.Customer;
+import com.example.customermanagementservice.dto.CustomerRequest;
+import com.example.customermanagementservice.dto.CustomerResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface CustomerService {
 
-    List<Customer> getAll();
-    List<Customer> getByName(String name);
+    /** Lists customers page by page; {@code search} (optional) matches name/surname, case-insensitive. */
+    Page<CustomerResponse> search(String search, Pageable pageable);
 
-    Customer addCustomer(CustomerRequest customerRequestDTO);
+    CustomerResponse getById(UUID id);
 
-    void deleteCustomer(UUID customerId);
+    CustomerResponse create(CustomerRequest request);
 
-    Customer updateActivation(long citizenNumber);
+    CustomerResponse update(UUID id, CustomerRequest request);
 
+    CustomerResponse setActive(UUID id, boolean active);
 
+    void delete(UUID id);
 }

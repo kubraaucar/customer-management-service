@@ -1,18 +1,23 @@
 package com.example.customermanagementservice.controller;
 
-import com.example.customermanagementservice.model.Customer;
+import com.example.customermanagementservice.dto.ActivationRequest;
+import com.example.customermanagementservice.dto.CustomerRequest;
+import com.example.customermanagementservice.dto.CustomerResponse;
 import com.example.customermanagementservice.service.CustomerService;
-
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/customer")
+@RequestMapping("/api/customers")
 public class CustomerController {
 
     private final CustomerService customerService;
@@ -21,32 +26,42 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
-    @GetMapping("/getAll")
-    public List<Customer> getAll() {
-        return customerService.getAll();
+    // GET /api/customers?search=ali&page=0&size=20&sort=name,asc
+    @GetMapping
+    public PagedModel<CustomerResponse> search(@RequestParam(required = false) String search,
+                                               @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+        return new PagedModel<>(customerService.search(search, pageable));
     }
 
-    @GetMapping("/getByName/{name}")
-    public List<Customer> getByName(@PathVariable String name) {
-        return customerService.getByName(name);
+    @GetMapping("/{id}")
+    public CustomerResponse getById(@PathVariable UUID id) {
+        return customerService.getById(id);
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<Object> addCustomer(@Valid @RequestBody CustomerRequest customerRequestDTO) {
-        Customer customer = customerService.addCustomer(customerRequestDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(customer);
+    @PostMapping
+    public ResponseEntity<CustomerResponse> create(@Valid @RequestBody CustomerRequest request) {
+        CustomerResponse created = customerService.create(request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.id())
+                .toUri();
+        return ResponseEntity.created(location).body(created);
     }
 
-    @DeleteMapping("/remove/{id}")
-    public ResponseEntity<Void> removeCustomer(@PathVariable("id") UUID customerId) {
-        customerService.deleteCustomer(customerId);
+    @PutMapping("/{id}")
+    public CustomerResponse update(@PathVariable UUID id, @Valid @RequestBody CustomerRequest request) {
+        return customerService.update(id, request);
+    }
+
+    // PATCH /api/customers/{id}/activation  body: {"active": true}
+    @PatchMapping("/{id}/activation")
+    public CustomerResponse setActivation(@PathVariable UUID id, @Valid @RequestBody ActivationRequest request) {
+        return customerService.setActive(id, request.active());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        customerService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
-    @PutMapping("/update/{citizenNumber}")
-    public ResponseEntity<Customer> updateActivation(@PathVariable("citizenNumber") long citizenNumber) {
-        Customer customer = customerService.updateActivation(citizenNumber);
-        return ResponseEntity.ok(customer);
-    }
-
 }

@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class DuplicateCitizenNumberException extends RuntimeException {
 
     public DuplicateCitizenNumberException(long citizenNumber) {
-        super("A customer with citizen number " + citizenNumber + " already exists.");
+        super(citizenNumber + " TC kimlik numarasıyla kayıtlı bir müşteri zaten var.");
     }
 }

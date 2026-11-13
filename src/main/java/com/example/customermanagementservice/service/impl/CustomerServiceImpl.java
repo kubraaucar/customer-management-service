@@ -1,18 +1,28 @@
 package com.example.customermanagementservice.service.impl;
 
-import com.example.customermanagementservice.controller.CustomerRequest;
+import com.example.customermanagementservice.dto.CustomerRequest;
+import com.example.customermanagementservice.dto.CustomerResponse;
 import com.example.customermanagementservice.exceptions.CustomerNotFoundException;
 import com.example.customermanagementservice.exceptions.DuplicateCitizenNumberException;
+import com.example.customermanagementservice.exceptions.InvalidSortPropertyException;
 import com.example.customermanagementservice.model.Customer;
 import com.example.customermanagementservice.repository.CustomerRepository;
 import com.example.customermanagementservice.service.CustomerService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class CustomerServiceImpl implements CustomerService {
+
+    private static final Set<String> SORTABLE_FIELDS =
+            Set.of("name", "surname", "citizenNumber", "birthDate", "active");
 
     private final CustomerRepository customerRepository;
 
@@ -21,46 +31,75 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public List<Customer> getAll() {
-        return customerRepository.findAll();
+    public Page<CustomerResponse> search(String search, Pageable pageable) {
+        for (Sort.Order order : pageable.getSort()) {
+            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
+                throw new InvalidSortPropertyException(order.getProperty());
+            }
+        }
+
+        Page<Customer> page = (search == null || search.isBlank())
+                ? customerRepository.findAll(pageable)
+                : customerRepository.search(search.trim(), pageable);
+        return page.map(CustomerResponse::from);
     }
 
     @Override
-    public List<Customer> getByName(String name) {
-        return customerRepository.findByName(name);
+    public CustomerResponse getById(UUID id) {
+        return CustomerResponse.from(findOrThrow(id));
     }
 
     @Override
-    public Customer addCustomer(CustomerRequest customerRequestDTO) {
-        long citizenNumber = customerRequestDTO.getCitizenNumber();
-        if (customerRepository.existsByCitizenNumber(citizenNumber)) {
-            throw new DuplicateCitizenNumberException(citizenNumber);
+    @Transactional
+    public CustomerResponse create(CustomerRequest request) {
+        if (customerRepository.existsByCitizenNumber(request.citizenNumber())) {
+            throw new DuplicateCitizenNumberException(request.citizenNumber());
         }
 
         Customer customer = new Customer();
-        customer.setName(customerRequestDTO.getName());
-        customer.setSurname(customerRequestDTO.getSurname());
-        customer.setCitizenNumber(citizenNumber);
-        customer.setBirthDate(customerRequestDTO.getBirthDate());
-        customer.setActive(customerRequestDTO.isActive());
-        return customerRepository.save(customer);
+        copyFields(request, customer);
+        return CustomerResponse.from(customerRepository.save(customer));
     }
 
     @Override
-    public void deleteCustomer(UUID customerId) {
-        if (!customerRepository.existsById(customerId)) {
-            throw new CustomerNotFoundException("Customer not found: " + customerId);
+    @Transactional
+    public CustomerResponse update(UUID id, CustomerRequest request) {
+        Customer customer = findOrThrow(id);
+        boolean citizenNumberChanged = customer.getCitizenNumber() != request.citizenNumber();
+        if (citizenNumberChanged && customerRepository.existsByCitizenNumber(request.citizenNumber())) {
+            throw new DuplicateCitizenNumberException(request.citizenNumber());
         }
-        customerRepository.deleteById(customerId);
+
+        copyFields(request, customer);
+        return CustomerResponse.from(customerRepository.save(customer));
     }
 
     @Override
-    public Customer updateActivation(long citizenNumber) {
-        Customer customer = customerRepository.findByCitizenNumber(citizenNumber)
-                .orElseThrow(() -> new CustomerNotFoundException(
-                        "No customer with citizen number " + citizenNumber));
-        customer.setActive(!customer.isActive());
-        return customerRepository.save(customer);
+    @Transactional
+    public CustomerResponse setActive(UUID id, boolean active) {
+        Customer customer = findOrThrow(id);
+        customer.setActive(active);
+        return CustomerResponse.from(customerRepository.save(customer));
     }
 
+    @Override
+    @Transactional
+    public void delete(UUID id) {
+        if (!customerRepository.existsById(id)) {
+            throw new CustomerNotFoundException(id);
+        }
+        customerRepository.deleteById(id);
+    }
+
+    private Customer findOrThrow(UUID id) {
+        return customerRepository.findById(id).orElseThrow(() -> new CustomerNotFoundException(id));
+    }
+
+    private static void copyFields(CustomerRequest request, Customer customer) {
+        customer.setName(request.name().trim());
+        customer.setSurname(request.surname().trim());
+        customer.setCitizenNumber(request.citizenNumber());
+        customer.setBirthDate(request.birthDate());
+        customer.setActive(request.isActive());
+    }
 }
